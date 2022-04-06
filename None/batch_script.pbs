@@ -1,0 +1,19 @@
+#!/bin/bash -l
+#
+#PBS -N V1val_V2val
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=999:00:00   \\申请999小时的工作，不满足将无法继续进行计算
+#PBS -e err.V1val_V2val_muval_Nc=SIZE.%j.txt
+#PBS -o out.V1val_V2val_muval_Nc=SIZE.%j.txt
+
+cd $PBS_O_WORKDIR
+
+source /home/zhumo/module_dqmc
+
+date
+
+JOBS
+
+date
+
+
