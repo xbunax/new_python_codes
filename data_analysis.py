@@ -78,8 +78,26 @@ class data_analysis(object):
         for j in range(len(a)):
             if str(a[j]).startswith(strs)==True :
                 data_analysis.data_write(self,path,'result',data_list[j+numstart])
-    def mkdir(self,path,V1_value,V2s_value):#创建文件夹
-        Path=path+'/'+str(V1_value)+'_'+str(V2s_value)
+    def data_tdm_out(self,path,filename,strs):
+        data_list=[]
+        a=[]
+        with open(filename, 'r') as f:
+            for i in f.readlines():
+                data_list.append(i)
+        for i in range(len(data_list)):
+                k =data_list[i]
+                result = "".join(k.split())
+                a.append(result)
+        for j in range(len(a)):
+            if str(a[j]).startswith(strs)==True:
+                for o in range(15):
+                    data_analysis.data_write(self,path,'result',data_list[j+o])
+                break
+
+
+
+    def mkdir(self,path,V1_value,V2s_value,Nsite):#创建文件夹
+        Path=path+'/'+str(V1_value)+'_'+str(V2s_value)+'_'+str(Nsite)
         folder = os.path.exists(Path)
         if not folder:
             os.makedirs(Path)
@@ -89,27 +107,29 @@ class data_analysis(object):
 
 
 
-    def filename_U4(self, V1_value, V2s_value, Nsite=16, seed='s1234567', number=0.4):
+    def filename_U4(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
         return "U4_V{}_tp{}_N{}_be4.0_{}_mu-{}.out".format(V1_value, V2s_value, Nsite, seed, number)
 
-    def filename_local_orb(self, V1_value, V2s_value, Nsite=16, seed='s1234567', number=0.4):
+    def filename_local_orb(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
         return "local_orb_U4_V{}_tp{}_N{}_be4.0_{}_mu-{}".format(V1_value, V2s_value, Nsite, seed, number)
 
-    def filename_U4_tdm(self, V1_value, V2s_value, Nsite=16, seed='s1234567', number=0.4):
+    def filename_U4_tdm(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
         return "U4_V{}_tp{}_N{}_be4.0_{}_mu-{}.tdm.out".format(V1_value, V2s_value, Nsite, seed, number)
-    def filename_geom(self,V1_value,V2s_value,Nsite=16):
+    def filename_geom(self,V1_value,V2s_value,Nsite):
         return "geomU4_V{}_tp{}_N{}".format(V1_value,V2s_value,Nsite)
 
 data = data_analysis()
 path = '/Users/xbunax/Documents/dqmc'  # 文件夹地址
-V1_value = 0.05
+V1_value = 0.5
 V2s_value = 0.01
-path1=data.mkdir(path,V1_value,V2s_value)
+Ncell=8
+Nsite=Ncell**2
+path1=data.mkdir(path,V1_value,V2s_value,Nsite)
 ##分别是ip,用户名,下载文件地址,本地地址
-filename_judge = data.filename_U4(V1_value, V2s_value, 16, 's1234567', 0.4)  # U4文件名
-filename_local_orb = data.filename_local_orb(V1_value, V2s_value, 16, 's1234567', 0.4)  # local_orb文件名
-filename_geo=data.filename_geom(V1_value,V2s_value)
-filename_tdm=data.filename_U4_tdm(V1_value,V2s_value)
+filename_judge = data.filename_U4(V1_value, V2s_value, Nsite, 's1234567',0.4)  # U4文件名
+filename_local_orb = data.filename_local_orb(V1_value, V2s_value, Nsite, 's1234567', 0.4)  # local_orb文件名
+filename_geo=data.filename_geom(V1_value,V2s_value,Nsite)
+filename_tdm=data.filename_U4_tdm(V1_value,V2s_value,Nsite)
 path3=path1+'/'+'test'
 if data.exit(path3, filename_judge) == True and data.exit(path3,filename_local_orb)==True and data.exit(path3,filename_geo)==True and data.exit(path3,filename_tdm)==True:
     data.data_write(path1,'result','=============================')
@@ -123,10 +143,11 @@ if data.exit(path3, filename_judge) == True and data.exit(path3,filename_local_o
     data.data_write(path1,'result','Hamilt')
     data.data_out(path1,path3+'/'+filename_geo,'',17,35)
     data.data_write(path1,'result','tdm_out')
-    data.data_out(path1,path3+'/'+filename_tdm,'Pd',44730,44746)
+    data.data_tdm_out(path1,path3+'/'+filename_tdm,'Pd')
 else:
-    data.download('10.10.8.74','zhumo','/home/zhumo/run_Ce3PtIn11/test',Path1)
+    data.download('10.10.8.74','zhumo','/home/zhumo/run_Ce3PtIn11/test',path1)
     Path2=path1+'/'+'test'
+    data.data_write(path1,'result','=============================')
     data.data_write(path1,'result','Hamilt')
     data.data_out(path1,Path2 + '/' + filename_judge, 'Avg', 1, 47)
     data.data_out(path1,Path2 + '/' + filename_judge, 'Density', 1, 47)
@@ -137,7 +158,7 @@ else:
     data.data_write(path1,'result','Hamilt')
     data.data_out(path1,Path2 + '/' + filename_geo, '', 17, 35)
     data.data_write(path1,'result','tdm_out')
-    data.data_out(path1,Path2 + '/' + filename_tdm, 'Pd', 44730, 44746)
+    data.data_tdm_out(path1,path3+'/'+filename_tdm,'Pd')
 
 
 
