@@ -1,11 +1,13 @@
 import pexpect
 from pathlib import Path
 import os
+import matplotlib.pyplot as plt
+import re
 
 class data_analysis(object):
 
     def __init__(self):
-        self.passwd_key = '12345'
+        self.passwd_key = '12345'#密码
         print("data_analysis Working")
 
     def upload(self, ip, user, dst_path, filename):
@@ -27,7 +29,7 @@ class data_analysis(object):
             child = pexpect.spawn(cmdline)
             child.expect("password")
             child.sendline(self.passwd_key)
-            child.expect(pexpect.EOF, timeout=120)  # timeout是持续时间如果下载时间很长可以大一点
+            child.expect(pexpect.EOF, timeout=None)  #timeout是持续时间如果下载时间很长可以大一点
             print("file download Finish!")
         except Exception as e:
             print("download failed:", e)
@@ -53,6 +55,7 @@ class data_analysis(object):
     def data_out(self, path,filename, strs, numstart,numend):#输出结果
         data_list=[]
         a=[]
+        b=[]
         with open(filename, 'r') as f:
             for i in f.readlines():
                 data_list.append(i)
@@ -63,6 +66,8 @@ class data_analysis(object):
         for j in range(len(a)):
             if strs in a[j]:
                 data_analysis.data_write(self,path,'result',data_list[j+numstart])
+                b.append(data_list[j+numstart])
+        return b
 
     def data_out_local(self,path,filename, strs, numstart,numend):#local_orb文件结果输出
         data_list=[]
@@ -78,6 +83,8 @@ class data_analysis(object):
         for j in range(len(a)):
             if str(a[j]).startswith(strs)==True :
                 data_analysis.data_write(self,path,'result',data_list[j+numstart])
+
+
     def data_tdm_out(self,path,filename,strs):
         data_list=[]
         a=[]
@@ -95,7 +102,6 @@ class data_analysis(object):
                 break
 
 
-
     def mkdir(self,path,V1_value,V2s_value,Nsite):#创建文件夹
         Path=path+'/'+str(V1_value)+'_'+str(V2s_value)+'_'+str(Nsite)
         folder = os.path.exists(Path)
@@ -107,58 +113,96 @@ class data_analysis(object):
 
 
 
-    def filename_U4(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
-        return "U4_V{}_tp{}_N{}_be4.0_{}_mu-{}.out".format(V1_value, V2s_value, Nsite, seed, number)
+    def filename_U4(self, V1_value, V2s_value, Nsite, seed, T,number):
+        return "U4_V{}_tp{}_N{}_be{}_{}_mu-{}.out".format(V1_value, V2s_value, Nsite, T,seed, number)
 
-    def filename_local_orb(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
-        return "local_orb_U4_V{}_tp{}_N{}_be4.0_{}_mu-{}".format(V1_value, V2s_value, Nsite, seed, number)
+    def filename_local_orb(self, V1_value, V2s_value, Nsite, seed,T,number):
+        return "local_orb_U4_V{}_tp{}_N{}_be{}_{}_mu-{}".format(V1_value, V2s_value, Nsite, T,seed, number)
 
-    def filename_U4_tdm(self, V1_value, V2s_value, Nsite, seed='s1234567', number=0.4):
-        return "U4_V{}_tp{}_N{}_be4.0_{}_mu-{}.tdm.out".format(V1_value, V2s_value, Nsite, seed, number)
+    def filename_U4_tdm(self, V1_value, V2s_value, Nsite, seed,T, number):
+        return "U4_V{}_tp{}_N{}_be{}_{}_mu-{}.tdm.out".format(V1_value, V2s_value, Nsite,T,seed, number)
+
     def filename_geom(self,V1_value,V2s_value,Nsite):
         return "geomU4_V{}_tp{}_N{}".format(V1_value,V2s_value,Nsite)
 
-data = data_analysis()
+    def data_conclusion(self,path,V1_value,V2s_value,Nsite,seed,T,number):
+        filename_judge = data_analysis.filename_U4(self,V1_value, V2s_value, Nsite, seed, T,number)  # U4文件名
+        filename_local_orb = data_analysis.filename_local_orb(self,V1_value, V2s_value, Nsite, seed, T,number)  # local_orb文件名
+        filename_geo = data_analysis.filename_geom(self,V1_value, V2s_value, Nsite)
+        filename_tdm = data_analysis.filename_U4_tdm(self,V1_value, V2s_value, Nsite,seed,T,number)
+        path1 = data_analysis.mkdir(self,path, V1_value, V2s_value, Nsite)  # 创建文件夹返回路径
+        path3=path1+'/'+'test'
+        if data_analysis.exit(self,path3, filename_judge) == True and data_analysis.exit(self,path3, filename_local_orb) == True and data_analysis.exit(self,path3, filename_geo) == True and data_analysis.exit(self,path3, filename_tdm) == True:
+            data_analysis.data_write(self,path1, 'result', '=============================')
+            data_analysis.data_write(self,path1, 'result', 'Avg and Density')
+            data_analysis.data_out(self,path1, path3 + '/' + filename_judge, 'Avg', 1, 47)
+            data_analysis.data_out(self,path1, path3 + '/' + filename_judge, 'Density', 1, 47)
+            data_analysis.data_write(self,path1, 'result', 'local_orb')
+            strs = ['11', '22', '33', '44', '55', '66']
+            for k in strs:
+                data_analysis.data_out_local(self,path1, path3 + '/' + filename_local_orb, k, 23, 59)
+            data_analysis.data_write(self,path1, 'result', 'Hamilt')
+            data_analysis.data_out(self,path1, path3 + '/' + filename_geo, '', 17, 35)
+            data_analysis.data_write(self,path1, 'result', 'tdm_out')
+            data_analysis.data_tdm_out(self,path1, path3 + '/' + filename_tdm, 'Pd')
+        else:
+            data_analysis.download(self,'10.10.8.74', 'zhumo', '/home/zhumo/run_Ce3PtIn11/test', path1)
+            Path2 = path1 + '/' + 'test'
+            data_analysis.data_write(self,path1, 'result', '=============================')
+            data_analysis.data_write(self,path1, 'result', 'Hamilt')
+            data_analysis.data_out(self,path1, Path2 + '/' + filename_judge, 'Avg', 1, 47)
+            data_analysis.data_out(self,path1, Path2 + '/' + filename_judge, 'Density', 1, 47)
+            data_analysis.data_write(self,path1, 'result', 'local_orb')
+            strs = ['11', '22', '33', '44', '55', '66']
+            for k in strs:
+                data_analysis.data_out_local(self,path1, Path2 + '/' + filename_local_orb, k, 23, 59)
+            data_analysis.data_write(self,path1, 'result', 'Hamilt')
+            data_analysis.data_out(self,path1, Path2 + '/' + filename_geo, '', 17, 35)
+            data_analysis.data_write(self,path1, 'result', 'tdm_out')
+            data_analysis.data_tdm_out(self,path1, path3 + '/' + filename_tdm, 'Pd')
+        return 'Finish'
+
+    def data_temperature(self,path,ls,dtaus,V1_value,V2s_value,Nstie,seed,number):
+        b=[]
+        l=[]
+        y=[]
+        err=[]
+        for i in range(len(ls)):
+            b.append(ls[i]*dtaus[i])
+        path1 = data_analysis.mkdir(self, path, V1_value, V2s_value, Nsite)  # 创建文件夹返回路径
+        path3 = path1 + '/' + 'test'
+        for k in b:
+            filename_judge=data_analysis.filename_U4(self,V1_value,V2s_value,Nsite,seed,k,number)
+            if data_analysis.exit(self,path3,filename_judge)==True:
+                print('exit',filename_judge)
+            else:
+                print("don't exit:",filename_judge)
+            l.append(data_analysis.data_out(self,path3,path3+'/'+filename_judge,'XXAFstructurefactor',47,77))
+        for i in l:
+            p=re.findall(r"\d+\.?\d*",i[0])
+            negative_p=re.findall(r"-\d+\.?\d*",i[0])
+            y.append(float(p[0])*10**float(p[1]))
+            err.append(float(p[2])*10**float(negative_p[0]))
+        plt.errorbar(b,y,yerr=err,fmt='co')
+        plt.ylim(0.36,0.375)
+        plt.show()
+
+
+
+
+
 path = '/Users/xbunax/Documents/dqmc'  # 文件夹地址
-V1_value = 0.5
-V2s_value = 0.01
-Ncell=8
+V1_value = 4.0
+V2s_value = 1.0
+Ncell=6
 Nsite=Ncell**2
-path1=data.mkdir(path,V1_value,V2s_value,Nsite)
-##分别是ip,用户名,下载文件地址,本地地址
-filename_judge = data.filename_U4(V1_value, V2s_value, Nsite, 's1234567',0.4)  # U4文件名
-filename_local_orb = data.filename_local_orb(V1_value, V2s_value, Nsite, 's1234567', 0.4)  # local_orb文件名
-filename_geo=data.filename_geom(V1_value,V2s_value,Nsite)
-filename_tdm=data.filename_U4_tdm(V1_value,V2s_value,Nsite)
-path3=path1+'/'+'test'
-if data.exit(path3, filename_judge) == True and data.exit(path3,filename_local_orb)==True and data.exit(path3,filename_geo)==True and data.exit(path3,filename_tdm)==True:
-    data.data_write(path1,'result','=============================')
-    data.data_write(path1,'result','Avg and Density')
-    data.data_out(path1,path3 + '/' + filename_judge,'Avg',1, 47)
-    data.data_out(path1,path3 + '/' + filename_judge,'Density',1, 47)
-    data.data_write(path1,'result','local_orb')
-    strs=['11','22','33','44','55','66']
-    for k in strs:
-        data.data_out_local(path1,path3+'/'+filename_local_orb,k,23,59)
-    data.data_write(path1,'result','Hamilt')
-    data.data_out(path1,path3+'/'+filename_geo,'',17,35)
-    data.data_write(path1,'result','tdm_out')
-    data.data_tdm_out(path1,path3+'/'+filename_tdm,'Pd')
-else:
-    data.download('10.10.8.74','zhumo','/home/zhumo/run_Ce3PtIn11/test',path1)
-    Path2=path1+'/'+'test'
-    data.data_write(path1,'result','=============================')
-    data.data_write(path1,'result','Hamilt')
-    data.data_out(path1,Path2 + '/' + filename_judge, 'Avg', 1, 47)
-    data.data_out(path1,Path2 + '/' + filename_judge, 'Density', 1, 47)
-    data.data_write(path1,'result','local_orb')
-    strs = ['11', '22', '33', '44', '55', '66']
-    for k in strs:
-        data.data_out_local(path1,Path2 + '/' + filename_local_orb,k, 23, 59)
-    data.data_write(path1,'result','Hamilt')
-    data.data_out(path1,Path2 + '/' + filename_geo, '', 17, 35)
-    data.data_write(path1,'result','tdm_out')
-    data.data_tdm_out(path1,path3+'/'+filename_tdm,'Pd')
+ls=[40]
+dtaus=[0.1]
+#T=ls*dtaus
+seed='s1234567'
+number=0.4
+#data_analysis.data_conclusion(data_analysis,path,V1_value,V2s_value,Nsite,seed,T,number)
+data_analysis.data_temperature(data_analysis,path,ls,dtaus,V1_value,V2s_value,Nsite,seed,number)
 
 
 
