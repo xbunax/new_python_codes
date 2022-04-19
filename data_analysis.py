@@ -28,7 +28,7 @@ class data_analysis(object):
         try:
             child = pexpect.spawn(cmdline)
             child.expect("password")
-            child.sendline(self.passwd_key)
+            child.sendline('12345')
             child.expect(pexpect.EOF, timeout=None)  #timeout是持续时间如果下载时间很长可以大一点
             print("file download Finish!")
         except Exception as e:
@@ -83,6 +83,8 @@ class data_analysis(object):
         for j in range(len(a)):
             if str(a[j]).startswith(strs)==True :
                 data_analysis.data_write(self,path,'result',data_list[j+numstart])
+                b.append(data_list[j+numstart])
+        return b
 
 
     def data_tdm_out(self,path,filename,strs):
@@ -102,8 +104,8 @@ class data_analysis(object):
                 break
 
 
-    def mkdir(self,path,V1_value,V2s_value,Nsite):#创建文件夹
-        Path=path+'/'+str(V1_value)+'_'+str(V2s_value)+'_'+str(Nsite)
+    def mkdir(self,path,V1_value,V2s_value,Nsite,mus):#创建文件夹
+        Path=path+'/'+str(V1_value)+'_'+str(V2s_value)+'_'+str(Nsite)+'_'+str(mus)
         folder = os.path.exists(Path)
         if not folder:
             os.makedirs(Path)
@@ -113,23 +115,23 @@ class data_analysis(object):
 
 
 
-    def filename_U4(self, V1_value, V2s_value, Nsite, seed, T,number):
-        return "U4_V{}_tp{}_N{}_be{}_{}_mu-{}.out".format(V1_value, V2s_value, Nsite, T,seed, number)
+    def filename_U4(self, V1_value, V2s_value, Nsite, seed, T, mus):
+        return "U4_V{}_tp{}_N{}_be{}_{}_mu{}.out".format(V1_value, V2s_value, Nsite, T, seed, mus)
 
-    def filename_local_orb(self, V1_value, V2s_value, Nsite, seed,T,number):
-        return "local_orb_U4_V{}_tp{}_N{}_be{}_{}_mu-{}".format(V1_value, V2s_value, Nsite, T,seed, number)
+    def filename_local_orb(self, V1_value, V2s_value, Nsite, seed,T,mus):
+        return "local_orb_U4_V{}_tp{}_N{}_be{}_{}_mu{}".format(V1_value, V2s_value, Nsite, T,seed, mus)
 
-    def filename_U4_tdm(self, V1_value, V2s_value, Nsite, seed,T, number):
-        return "U4_V{}_tp{}_N{}_be{}_{}_mu-{}.tdm.out".format(V1_value, V2s_value, Nsite,T,seed, number)
+    def filename_U4_tdm(self, V1_value, V2s_value, Nsite, seed,T, mus):
+        return "U4_V{}_tp{}_N{}_be{}_{}_mu{}.tdm.out".format(V1_value, V2s_value, Nsite,T,seed, mus)
 
     def filename_geom(self,V1_value,V2s_value,Nsite):
         return "geomU4_V{}_tp{}_N{}".format(V1_value,V2s_value,Nsite)
 
-    def data_conclusion(self,path,V1_value,V2s_value,Nsite,seed,T,number):
-        filename_judge = data_analysis.filename_U4(self,V1_value, V2s_value, Nsite, seed, T,number)  # U4文件名
-        filename_local_orb = data_analysis.filename_local_orb(self,V1_value, V2s_value, Nsite, seed, T,number)  # local_orb文件名
+    def data_conclusion(self,path,V1_value,V2s_value,Nsite,seed,T,mus):
+        filename_judge = data_analysis.filename_U4(self,V1_value, V2s_value, Nsite, seed, T,mus)  # U4文件名
+        filename_local_orb = data_analysis.filename_local_orb(self,V1_value, V2s_value, Nsite, seed, T,mus)  # local_orb文件名
         filename_geo = data_analysis.filename_geom(self,V1_value, V2s_value, Nsite)
-        filename_tdm = data_analysis.filename_U4_tdm(self,V1_value, V2s_value, Nsite,seed,T,number)
+        filename_tdm = data_analysis.filename_U4_tdm(self,V1_value, V2s_value, Nsite,seed,T,mus)
         path1 = data_analysis.mkdir(self,path, V1_value, V2s_value, Nsite)  # 创建文件夹返回路径
         path3=path1+'/'+'test'
         if data_analysis.exit(self,path3, filename_judge) == True and data_analysis.exit(self,path3, filename_local_orb) == True and data_analysis.exit(self,path3, filename_geo) == True and data_analysis.exit(self,path3, filename_tdm) == True:
@@ -162,47 +164,54 @@ class data_analysis(object):
             data_analysis.data_tdm_out(self,path1, path3 + '/' + filename_tdm, 'Pd')
         return 'Finish'
 
-    def data_temperature(self,path,ls,dtaus,V1_value,V2s_value,Nstie,seed,number):
+    def data_temperature(self,path,ls,dtaus,V1_value,V2s_value,Nstie,seed,mus):
         b=[]
         l=[]
         y=[]
         err=[]
         for i in range(len(ls)):
             b.append(ls[i]*dtaus[i])
-        path1 = data_analysis.mkdir(self, path, V1_value, V2s_value, Nsite)  # 创建文件夹返回路径
+        path1 = data_analysis.mkdir(self, path, V1_value, V2s_value, Nsite,mus)  # 创建文件夹返回路径
         path3 = path1 + '/' + 'test'
         for k in b:
-            filename_judge=data_analysis.filename_U4(self,V1_value,V2s_value,Nsite,seed,k,number)
-            if data_analysis.exit(self,path3,filename_judge)==True:
-                print('exit',filename_judge)
+            filename_orb=data_analysis.filename_local_orb(self,V1_value,V2s_value,Nsite,seed,k,mus)
+            if data_analysis.exit(self,path3,filename_orb)==True:
+                print('exit',filename_orb)
             else:
-                print("don't exit:",filename_judge)
-            l.append(data_analysis.data_out(self,path3,path3+'/'+filename_judge,'XXAFstructurefactor',47,77))
+                print("don't exit:",filename_orb)
+                data_analysis.download(self, '10.10.8.74', 'zhumo', '/home/zhumo/run_Ce3PtIn11/test', path1)
+            l.append(data_analysis.data_out_local(self,path3,path3+'/'+filename_orb,'11',22,59))
         for i in l:
             p=re.findall(r"\d+\.?\d*",i[0])
             negative_p=re.findall(r"-\d+\.?\d*",i[0])
-            y.append(float(p[0])*10**float(p[1]))
-            err.append(float(p[2])*10**float(negative_p[0]))
-        plt.errorbar(b,y,yerr=err,fmt='co')
-        plt.ylim(0.36,0.375)
+            print(p,negative_p)
+            y.append(3*float(p[2])*10**float(p[3]))
+            err.append(float(p[4])*10**float(negative_p[0]))
+        plt.figure()
+        plt.errorbar(b,y,yerr=err,fmt='-co')
+        plt.xlabel('beta')
+        plt.ylabel('3*S_xx')
+        plt.title(str(V1_value)+'-'+str(V2s_value),fontsize=12)
+        plt.ylim(0,8)
+        plt.xlim(0,30)
         plt.show()
 
 
 
 
 
-path = '/Users/xbunax/Documents/dqmc'  # 文件夹地址
-V1_value = 4.0
+path = '/Users/xbunax/Documents/dqmc/dqmc_T'  # 文件夹地址
+V1_value = 1.0
 V2s_value = 1.0
-Ncell=6
+Ncell=4
 Nsite=Ncell**2
-ls=[40]
-dtaus=[0.1]
+ls=[50,100,150,200]
+dtaus=[0.1,0.1,0.1,0.1]
 #T=ls*dtaus
 seed='s1234567'
-number=0.4
+mus=0.0
 #data_analysis.data_conclusion(data_analysis,path,V1_value,V2s_value,Nsite,seed,T,number)
-data_analysis.data_temperature(data_analysis,path,ls,dtaus,V1_value,V2s_value,Nsite,seed,number)
+data_analysis.data_temperature(data_analysis,path, ls, dtaus, V1_value, V2s_value, Nsite, seed, mus)
 
 
 
